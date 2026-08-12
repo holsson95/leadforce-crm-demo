@@ -1,0 +1,227 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ===================================================================
+   LeadForce Design Tokens + Shadcn/UI CSS variables
+   =================================================================== */
+:root {
+  /* === Shadcn/UI component tokens — dark mode (default) === */
+  --background: oklch(0.09 0.010 65);
+  --foreground: oklch(0.91 0.012 75);
+  --card: oklch(0.12 0.010 65);
+  --card-foreground: oklch(0.91 0.012 75);
+  --popover: oklch(0.12 0.010 65);
+  --popover-foreground: oklch(0.91 0.012 75);
+  --primary: oklch(0.72 0.13 80);
+  --primary-foreground: oklch(0.09 0.010 65);
+  --secondary: oklch(0.16 0.010 65);
+  --secondary-foreground: oklch(0.75 0.010 70);
+  --muted: oklch(0.16 0.010 65);
+  --muted-foreground: oklch(0.52 0.010 70);
+  --accent: oklch(0.72 0.13 80);
+  --accent-foreground: oklch(0.09 0.010 65);
+  --destructive: oklch(0.63 0.22 25);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0.19 0.010 65);
+  --input: oklch(0.19 0.010 65);
+  --ring: oklch(0.72 0.13 80);
+  --radius: 0.75rem;
+  --sidebar: oklch(0.09 0.010 65);
+  --sidebar-foreground: oklch(0.91 0.012 75);
+  --sidebar-primary: oklch(0.72 0.13 80);
+  --sidebar-primary-foreground: oklch(0.09 0.010 65);
+  --sidebar-accent: oklch(0.16 0.010 65);
+  --sidebar-accent-foreground: oklch(0.91 0.012 75);
+  --sidebar-border: oklch(0.19 0.010 65);
+  --sidebar-ring: oklch(0.72 0.13 80);
+
+  /* === LeadForce design tokens — dark mode === */
+  --bg-dark: #141210;
+  --card-bg: rgba(24, 21, 16, 0.65);
+  --card-bg-solid: #18150f;
+  --panel-border: rgba(220, 200, 150, 0.08);
+  --panel-border-hover: rgba(220, 200, 150, 0.15);
+  --text-primary: #eae5dc;
+  --text-secondary: #8a8070;
+  --text-muted: #5e5648;
+  --text-disabled: #3e3830;
+  --lf-accent: #fbbf24;
+  --accent-muted: rgba(251, 191, 36, 0.10);
+  --panel-shadow: 0 0 15px rgba(251, 191, 36, 0.25);
+  --lf-success: #8fce7d;
+  --lf-warning: #fbbf24;
+  --lf-danger: #ef4444;
+  --lf-attention: #c97a50;
+  --lf-info: #7aaedb;
+}
+
+html.light {
+  /* === Shadcn/UI component tokens — light mode === */
+  --background: oklch(0.97 0.010 75);
+  --foreground: oklch(0.13 0.015 65);
+  --card: oklch(0.99 0.008 80);
+  --card-foreground: oklch(0.13 0.015 65);
+  --popover: oklch(0.99 0.008 80);
+  --popover-foreground: oklch(0.13 0.015 65);
+  --primary: oklch(0.65 0.13 80);
+  --primary-foreground: oklch(0.99 0.008 80);
+  --secondary: oklch(0.93 0.010 75);
+  --secondary-foreground: oklch(0.35 0.012 65);
+  --muted: oklch(0.93 0.010 75);
+  --muted-foreground: oklch(0.45 0.012 65);
+  --accent: oklch(0.65 0.13 80);
+  --accent-foreground: oklch(0.99 0.008 80);
+  --destructive: oklch(0.55 0.22 25);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0.87 0.010 70);
+  --input: oklch(0.87 0.010 70);
+  --ring: oklch(0.65 0.13 80);
+  --sidebar: oklch(0.95 0.010 75);
+  --sidebar-foreground: oklch(0.13 0.015 65);
+  --sidebar-primary: oklch(0.65 0.13 80);
+  --sidebar-primary-foreground: oklch(0.99 0.008 80);
+  --sidebar-accent: oklch(0.91 0.010 75);
+  --sidebar-accent-foreground: oklch(0.13 0.015 65);
+  --sidebar-border: oklch(0.87 0.010 70);
+  --sidebar-ring: oklch(0.65 0.13 80);
+
+  /* === LeadForce design tokens — light mode === */
+  --bg-dark: #f7f4ef;
+  --card-bg: rgba(255, 252, 246, 0.85);
+  --card-bg-solid: #fffcf6;
+  --panel-border: rgba(100, 80, 40, 0.10);
+  --panel-border-hover: rgba(100, 80, 40, 0.20);
+  --text-primary: #1c1812;
+  --text-secondary: #6b6255;
+  --text-muted: #9e9080;
+  --text-disabled: #bdb4a5;
+  --lf-accent: #f59e0b;
+  --accent-muted: rgba(245, 158, 11, 0.10);
+  --panel-shadow: 0 2px 12px rgba(100, 80, 40, 0.12);
+  --lf-success: #3d9b2a;
+  --lf-warning: #f59e0b;
+  --lf-danger: #dc2626;
+  --lf-attention: #b05a30;
+  --lf-info: #2a6fa8;
+}
+
+/* ===================================================================
+   Tailwind v4 theme tokens — generates utility classes
+   =================================================================== */
+@theme inline {
+  --color-dark: #141210;
+  --color-card-bg: rgba(24, 21, 16, 0.65);
+  --color-card-solid: #18150f;
+  --color-accent: #fbbf24;
+  --color-success: #8fce7d;
+  --color-warning: #fbbf24;
+  --color-danger: #ef4444;
+  --color-attention: #c97a50;
+  --color-info: #7aaedb;
+
+  --font-sans: var(--font-inter), sans-serif;
+  --font-mono: var(--font-mono-jetbrains), monospace;
+
+  --radius-3xl: 1.5rem;
+  --radius-4xl: 2rem;
+
+  --animate-call-pulse: call-pulse 2s infinite;
+  --animate-pulse-amber: pulse-amber 2s infinite;
+  --animate-pulse-glow: pulse-glow 3s infinite;
+  --animate-fade-in: fade-in 300ms ease-out;
+  --animate-slide-up: slide-up 200ms ease-out;
+  --animate-slide-in-right: slide-in-right 300ms ease-out;
+}
+
+/* ===================================================================
+   Base styles
+   =================================================================== */
+@layer base {
+  html {
+    font-size: 106.25%;
+  }
+  * {
+    border-color: var(--border);
+    outline-color: var(--ring);
+  }
+  body {
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    transition: background-color 200ms ease, color 200ms ease;
+  }
+}
+
+/* ===================================================================
+   Utility classes
+   =================================================================== */
+@layer utilities {
+  .glass-panel {
+    background: var(--card-bg);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--panel-border);
+    box-shadow: var(--panel-shadow);
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--panel-border-hover);
+    border-radius: 10px;
+  }
+}
+
+/* ===================================================================
+   Keyframes
+   =================================================================== */
+@keyframes call-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(143, 206, 125, 0.5); }
+  70%  { box-shadow: 0 0 0 12px rgba(143, 206, 125, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(143, 206, 125, 0); }
+}
+
+@keyframes pulse-amber {
+  0%   { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.5); }
+  70%  { box-shadow: 0 0 0 12px rgba(251, 191, 36, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 8px rgba(251, 191, 36, 0.2); }
+  50%       { box-shadow: 0 0 20px rgba(251, 191, 36, 0.5); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from { transform: translateY(10px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+@keyframes slide-in-right {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+
+@keyframes waveform {
+  0%, 100% { transform: scaleY(0.3); }
+  50%       { transform: scaleY(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-call-pulse,
+  .animate-pulse-amber,
+  .animate-pulse-glow {
+    animation: none;
+  }
+}
