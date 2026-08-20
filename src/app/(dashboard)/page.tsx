@@ -44,7 +44,7 @@ export default async function DashboardPage() {
     const email = clerkUser?.emailAddresses[0]?.emailAddress ?? ''
     const name  = [clerkUser?.firstName, clerkUser?.lastName].filter(Boolean).join(' ') || email
     dbUser = await db.user.upsert({
-      where:  { clerkId },
+      where:  { tenantId_clerkId: { tenantId, clerkId } },
       create: { clerkId, tenantId, email, name, role: role as UserRole },
       update: { email, name },
       select: { id: true, sdrPermissions: { select: { canAccessDashboard: true }, take: 1 } },

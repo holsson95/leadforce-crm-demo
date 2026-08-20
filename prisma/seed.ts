@@ -27,7 +27,7 @@ async function main() {
   // Find your Clerk user ID in: Clerk Dashboard → Users → click your user → copy "User ID"
   const clerkId = process.env.CLERK_USER_ID ?? 'REPLACE_WITH_YOUR_CLERK_USER_ID'
 
-  const existing = await prisma.user.findUnique({ where: { clerkId } })
+  const existing = await prisma.user.findUnique({ where: { tenantId_clerkId: { tenantId: tenant.id, clerkId } } })
   if (existing) {
     console.log('User already exists:', existing.id)
   } else {

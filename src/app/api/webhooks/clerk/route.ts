@@ -45,7 +45,7 @@ export async function POST(req: Request) {
       const email = email_addresses?.[0]?.email_address ?? ''
       const name  = [first_name, last_name].filter(Boolean).join(' ') || email
       await db.user.upsert({
-        where:  { clerkId: id },
+        where:  { tenantId_clerkId: { tenantId, clerkId: id } },
         create: { clerkId: id, tenantId, email, name, role: role as UserRole },
         update: { email, name, role: role as UserRole, tenantId },
       })
@@ -70,7 +70,7 @@ export async function POST(req: Request) {
       await db.$transaction([
         db.client.update({ where: { id: clientId }, data: { clerkId: id } }),
         db.user.upsert({
-          where:  { clerkId: id },
+          where:  { tenantId_clerkId: { tenantId: clientRecord.tenantId, clerkId: id } },
           create: { clerkId: id, tenantId: clientRecord.tenantId, email, name, role: 'client' },
           update: { email, name, role: 'client' },
         }),
@@ -96,7 +96,7 @@ export async function POST(req: Request) {
 
     if (tenantId) {
       await db.user.upsert({
-        where:  { clerkId: id },
+        where:  { tenantId_clerkId: { tenantId, clerkId: id } },
         create: { clerkId: id, tenantId, email, name, role },
         update: { email, name, role, tenantId },
       })

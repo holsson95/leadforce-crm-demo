@@ -1,7 +1,7 @@
 'use client'
 
 import { UserButton } from '@clerk/nextjs'
-import { ThemeToggle } from '@/components/shared/ThemeToggle'
+import { DemoRoleSwitcher } from '@/components/shared/DemoRoleSwitcher'
 
 interface PortalHeaderProps {
   clientName: string
@@ -18,7 +18,7 @@ export function PortalHeader({ clientName }: PortalHeaderProps) {
         <span className="text-sm text-[var(--text-secondary)] truncate max-w-xs">{clientName}</span>
       </div>
       <div className="flex items-center gap-3">
-        <ThemeToggle />
+        <DemoRoleSwitcher />
         <UserButton
           appearance={{
             elements: {

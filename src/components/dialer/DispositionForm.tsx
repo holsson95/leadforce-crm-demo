@@ -185,7 +185,7 @@ export function DispositionForm({
                 }}
               </SelectValue>
             </SelectTrigger>
-            <SelectContent className="rounded-xl border-[var(--panel-border)] bg-[var(--card-bg)] max-h-72 overflow-y-auto">
+            <SelectContent alignItemWithTrigger={false} className="rounded-xl border-[var(--panel-border)] bg-[var(--card-bg)] max-h-72 overflow-y-auto">
               {OUTCOME_OPTIONS.map((value) => {
                 const color = OUTCOME_COLOR[value]
                 return (
@@ -283,7 +283,7 @@ export function DispositionForm({
                       }}
                     </SelectValue>
                   </SelectTrigger>
-                  <SelectContent className="rounded-xl border-[var(--panel-border)] bg-[var(--card-bg)]">
+                  <SelectContent alignItemWithTrigger={false} className="rounded-xl border-[var(--panel-border)] bg-[var(--card-bg)]">
                     <SelectItem
                       value={QUEUE_FOR_LATER}
                       className="text-[var(--text-secondary)] focus:bg-[var(--panel-border-hover)] focus:text-[var(--text-primary)] rounded-lg italic"

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { MapPin, Clock, Copy, Check, ChevronDown, ArrowLeft } from 'lucide-react'
+import { MapPin, Clock, Copy, Check, ChevronDown, ArrowLeft, Phone, PhoneOff } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useDialerStore } from '@/stores/dialer-store'
 import { getCityTimezone, formatLocalTime } from '@/lib/timezone'
@@ -54,6 +54,12 @@ function CopyButton({ value }: { value: string }) {
   )
 }
 
+function formatDuration(totalSeconds: number): string {
+  const m = Math.floor(totalSeconds / 60)
+  const s = totalSeconds % 60
+  return `${m}:${String(s).padStart(2, '0')}`
+}
+
 function ContactInfoCard({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
     <div
@@ -70,11 +76,15 @@ function ContactInfoCard({ label, value, mono }: { label: string; value: string;
 }
 
 export function ProfileViewCard({ contact, totalContacts, campaignId }: ProfileViewCardProps) {
-  const { setCallingView, advanceProfile, logManualOutcome, calledToday, phoneNumberView } = useDialerStore()
+  const {
+    setCallingView, advanceProfile, logManualOutcome, calledToday, phoneNumberView,
+    callStatus, currentContact, selectContact, startCall, endCall,
+  } = useDialerStore()
 
   const [localTime,     setLocalTime]     = useState<string | null>(null)
   const [noteEntries,   setNoteEntries]   = useState<NoteEntry[] | null>(null)
   const [activityOpen,  setActivityOpen]  = useState(false)
+  const [callElapsed,   setCallElapsed]   = useState(0)
 
   // Outcome chosen from the action bar's search dropdown, awaiting notes/pipeline before it's staged
   const [pendingOutcome, setPendingOutcome] = useState<CallOutcome | null>(null)
@@ -94,6 +104,20 @@ export function ProfileViewCard({ contact, totalContacts, campaignId }: ProfileV
   const locationLabel = [displayContact.city, displayContact.country].filter(Boolean).join(', ')
   const phoneValue = resolvePhoneNumber(displayContact, phoneNumberView)
   const phoneLabel = phoneNumberView === 'corporate' ? 'Corporate' : 'Mobile'
+
+  const isThisContactActive = currentContact?.id === displayContact.id
+  const callActiveHere      = isThisContactActive && (callStatus === 'ringing' || callStatus === 'connected')
+  const callBlockedByOther  = callStatus !== 'idle' && !isThisContactActive
+
+  // Tick a local call-duration timer while connected — reset whenever a new call starts
+  useEffect(() => {
+    if (!isThisContactActive || callStatus !== 'connected') {
+      if (!isThisContactActive || callStatus === 'ringing') setCallElapsed(0)
+      return
+    }
+    const id = setInterval(() => setCallElapsed((s) => s + 1), 1000)
+    return () => clearInterval(id)
+  }, [isThisContactActive, callStatus])
 
   // Live local time — recompute when contact.city / country changes
   useEffect(() => {
@@ -179,6 +203,15 @@ export function ProfileViewCard({ contact, totalContacts, campaignId }: ProfileV
     }
   }
 
+  const handleCall = async () => {
+    if (!isThisContactActive) selectContact(displayContact)
+    await startCall(phoneValue ?? undefined)
+  }
+
+  const handleEndCall = async () => {
+    await endCall(callElapsed)
+  }
+
   const handleBackToQueue = () => {
     if (draftDisposition) {
       if (!confirm('Discard unsaved outcome for this contact?')) return
@@ -225,6 +258,44 @@ export function ProfileViewCard({ contact, totalContacts, campaignId }: ProfileV
         )}
       </div>
 
+      {/* Call status bar — ringing / connected */}
+      {callActiveHere && (
+        <div
+          className="flex items-center justify-between gap-3 rounded-[10px] px-[14px] py-[10px]"
+          style={{
+            background: callStatus === 'connected' ? '#16281f' : 'var(--card-bg-solid)',
+            border: `0.5px solid ${callStatus === 'connected' ? '#234534' : 'var(--panel-border-hover)'}`,
+          }}
+        >
+          <div className="flex items-center gap-2">
+            <span
+              className={cn(
+                'w-2 h-2 rounded-full flex-shrink-0',
+                callStatus === 'connected' ? 'bg-emerald-400' : 'bg-[var(--lf-accent)] animate-pulse',
+              )}
+            />
+            <span
+              className="text-[12px] font-medium"
+              style={{ color: callStatus === 'connected' ? '#7dd6ab' : 'var(--lf-accent)' }}
+            >
+              {callStatus === 'connected' ? `Connected · ${formatDuration(callElapsed)}` : 'Ringing…'}
+            </span>
+          </div>
+          <button
+            onClick={handleEndCall}
+            className={cn(
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold transition-colors',
+              callStatus === 'connected'
+                ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20'
+                : 'bg-[var(--panel-border)] text-[var(--text-secondary)] hover:bg-[var(--panel-border-hover)]',
+            )}
+          >
+            <PhoneOff className="w-3 h-3" />
+            {callStatus === 'connected' ? 'End Call' : 'Cancel'}
+          </button>
+        </div>
+      )}
+
       {/* Name block */}
       <div className="flex flex-col items-center gap-1 mt-4">
         <div className="flex items-center gap-2">
@@ -250,6 +321,23 @@ export function ProfileViewCard({ contact, totalContacts, campaignId }: ProfileV
           <p className="text-[14px] text-[var(--text-secondary)]">{displayContact.jobTitle}</p>
         )}
       </div>
+
+      {/* Call button */}
+      {!callActiveHere && (
+        <button
+          onClick={handleCall}
+          disabled={!phoneValue || callBlockedByOther}
+          title={!phoneValue ? `No ${phoneNumberView} number on file` : callBlockedByOther ? 'Call in progress' : undefined}
+          className={cn(
+            'flex items-center justify-center gap-2 w-full max-w-[280px] mx-auto h-11 rounded-2xl text-[14px] font-semibold transition-opacity',
+            'bg-gradient-to-r from-[var(--lf-accent)] to-amber-600 text-black shadow-lg shadow-[var(--lf-accent)]/20',
+            (!phoneValue || callBlockedByOther) && 'opacity-40 cursor-not-allowed',
+          )}
+        >
+          <Phone className="w-4 h-4" />
+          Call {displayContact.firstName}
+        </button>
+      )}
 
       {/* Contact info cards */}
       {(phoneValue || displayContact.email) && (

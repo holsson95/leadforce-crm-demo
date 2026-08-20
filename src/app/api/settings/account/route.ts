@@ -49,7 +49,7 @@ export async function PATCH(req: NextRequest) {
 
     const updated = await withTenant(tenantId, () =>
       db.user.update({
-        where:  { clerkId },
+        where:  { tenantId_clerkId: { tenantId, clerkId } },
         data:   parsed.data,
         select: { id: true, name: true, email: true, timezone: true, role: true },
       })

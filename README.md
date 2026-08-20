@@ -1,6 +1,17 @@
-# LeadForce CRM
+# LeadForce CRM (Public Demo)
 
 A high-performance sales engagement platform built for outsourced SDR teams and sales agencies. LeadForce combines a power dialer, campaign management, pipeline tracking, and client reporting into a single workspace.
+
+This repository is a **public portfolio demo** built from a real client project. Telephony and email/invite flows are fully simulated — no real phone calls are ever placed and no real emails are ever sent — and all data is fictional. See [About this demo](#about-this-demo) below.
+
+---
+
+## About this demo
+
+- **One-click access.** Click "View Demo" on the sign-in screen — no signup, no email required.
+- **Two fictional tenants** ("Acme Outreach" and "Nova Sales") with their own reps, clients, campaigns, contacts, and pipeline, seeded by `scripts/seed-demo.ts`. A switcher in the header lets you flip between them live to see multi-tenant data isolation in action.
+- **Simulated telephony.** `src/lib/telephony/mock.ts` drives the dialer's call states locally — there's no real telephony API this build can reach.
+- **Data resets hourly** via a Vercel Cron job (`/api/cron/reset-demo`) that re-runs the seed script, so feel free to edit, delete, or create anything.
 
 ---
 
@@ -31,14 +42,11 @@ LeadForce is designed for companies that run outbound calling campaigns on behal
 | UI | Shadcn/UI, Tailwind CSS |
 | Fonts | Outfit (UI), JetBrains Mono (data) |
 | Icons | Lucide React |
-| Database | PostgreSQL (Supabase) with Prisma ORM |
+| Database | PostgreSQL (Supabase/Neon) with Prisma ORM |
 | Auth | Clerk (multi-tenant, role-based) |
-| Real-Time | Socket.io, Redis pub/sub |
-| Job Queue | BullMQ, Redis |
-| File Storage | Cloudflare R2 |
-| AI | Anthropic API |
-| Telephony | JustCall API (behind abstraction layer) |
-| Hosting | Vercel (frontend), Railway (backend services) |
+| AI | Google Gemini API (company summaries) |
+| Telephony | Simulated in this demo, behind the same abstraction layer a real provider would use |
+| Hosting | Vercel (app + cron jobs) |
 
 ---
 
@@ -47,28 +55,31 @@ LeadForce is designed for companies that run outbound calling campaigns on behal
 ### Prerequisites
 
 - Node.js v18+
-- npm or pnpm
+- npm
 - Git
-- A Supabase project (PostgreSQL with RLS enabled)
+- A Postgres database (Supabase or Neon both work)
 - A Clerk account with API keys
 
 ### Installation
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/leadforce-crm.git
-cd leadforce-crm
+git clone https://github.com/<you>/leadforce-crm-demo.git
+cd leadforce-crm-demo
 
 # Install dependencies
 npm install
 
 # Set up environment variables
 cp .env.example .env.local
-# Fill in your keys (see Environment Variables below)
+# Fill in your keys — see .env.example for what each one is for
 
 # Generate Prisma client and run migrations
 npx prisma generate
-npx prisma db push
+npx prisma migrate dev
+
+# Seed the two demo tenants
+npm run db:seed:demo
 
 # Start the development server
 npm run dev
@@ -78,40 +89,7 @@ The app will be available at `http://localhost:3000`.
 
 ### Environment Variables
 
-Create a `.env.local` file in the project root:
-
-```env
-# Database (Supabase)
-DATABASE_URL="postgresql://..."
-
-# Clerk Authentication
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_..."
-CLERK_SECRET_KEY="sk_..."
-NEXT_PUBLIC_CLERK_SIGN_IN_URL="/sign-in"
-NEXT_PUBLIC_CLERK_SIGN_UP_URL="/sign-up"
-NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL="/"
-NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL="/"
-
-# Redis
-REDIS_URL="redis://..."
-
-# JustCall (Phase 3)
-JUSTCALL_API_KEY=""
-JUSTCALL_API_SECRET=""
-JUSTCALL_WEBHOOK_SECRET=""
-
-# Anthropic AI
-ANTHROPIC_API_KEY=""
-
-# Cloudflare R2
-R2_ACCOUNT_ID=""
-R2_ACCESS_KEY_ID=""
-R2_SECRET_ACCESS_KEY=""
-R2_BUCKET_NAME=""
-
-# App
-NEXT_PUBLIC_APP_URL="http://localhost:3000"
-```
+See [.env.example](.env.example) for the full list with explanations — copy it to `.env.local` and fill in real values. The last section (`NEXT_PUBLIC_DEMO_EMAIL` / `NEXT_PUBLIC_DEMO_PASSWORD` / `DEMO_USER_CLERK_ID`) is only needed to power the "View Demo" one-click login; everything else is standard Clerk + Postgres + Gemini setup.
 
 ---
 
@@ -121,13 +99,13 @@ NEXT_PUBLIC_APP_URL="http://localhost:3000"
 leadforce-crm/
 ├── CLAUDE.md                    # AI assistant project context
 ├── docs/
-│   ├── LeadForce_CRM_Specification_v1.1.docx
+│   ├── LeadForce_CRM_Specification.docx
 │   └── LEADFORCE_UI_STYLE_GUIDE.md
 ├── prisma/
 │   └── schema.prisma
 ├── src/
 │   ├── app/                     # Next.js App Router (pages + API)
-│   │   ├── (auth)/              # Login, signup, invite flows
+│   │   ├── (auth)/              # Sign-in ("View Demo" one-click login); signup/invite are disabled in this build
 │   │   ├── (dashboard)/         # Main app (sidebar layout)
 │   │   ├── client-portal/       # Client-facing views
 │   │   └── api/                 # API routes
@@ -197,7 +175,7 @@ Every tenant-specific table includes a `tenantId` column. Tenant isolation is en
 
 ### Telephony Abstraction
 
-All telephony operations go through a `TelephonyService` interface. JustCall is the initial implementation. This abstraction allows adding Twilio or other providers without modifying business logic. Components and API routes never import JustCall directly.
+All telephony operations go through a `TelephonyService` interface (`src/lib/telephony/types.ts`). This demo build only ships `MockTelephonyService` — there is no real provider implementation in this repo, so it's structurally impossible for it to place a real call. A real provider (JustCall, Twilio, etc.) would be a drop-in implementation of the same interface; components and API routes never import a provider directly.
 
 ### AI Abstraction
 
@@ -210,7 +188,7 @@ Same pattern as telephony. An `AIService` interface wraps company summary genera
 | Document | Description |
 |---|---|
 | `CLAUDE.md` | AI development context — tech stack, conventions, architecture decisions, build order |
-| `docs/LeadForce_CRM_Specification_v1.1.docx` | Full product specification (24 sections) |
+| `docs/LeadForce_CRM_Specification.docx` | Full product specification (24 sections) |
 | `docs/LEADFORCE_UI_STYLE_GUIDE.md` | Complete UI design system — colors, typography, components, animations |
 
 ---

@@ -229,6 +229,60 @@ describe('ProfileViewCard — draft disposition flow', () => {
   })
 })
 
+describe('ProfileViewCard — calling', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    global.fetch = mockFetch()
+    useDialerStore.setState({
+      campaignId:     'camp1',
+      currentContact: contact,
+      queue:          [],
+      calledToday:    [],
+      totalContacts:  1,
+      callStatus:     'idle',
+      advanceProfile: vi.fn(async () => {}),
+    })
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+    useDialerStore.setState({ callStatus: 'idle' })
+  })
+
+  it('shows a Call button when idle', () => {
+    render(<ProfileViewCard contact={contact} totalContacts={1} campaignId="camp1" />)
+    expect(screen.getByRole('button', { name: /Call John/ })).toBeInTheDocument()
+  })
+
+  it('disables the Call button when the contact has no phone number for the current view', () => {
+    const noPhone = { ...contact, mobilePhone: null, corporatePhone: null }
+    useDialerStore.setState({ currentContact: noPhone })
+    render(<ProfileViewCard contact={noPhone} totalContacts={1} campaignId="camp1" />)
+    expect(screen.getByRole('button', { name: /Call John/ })).toBeDisabled()
+  })
+
+  it('starts the call and shows a Ringing status bar, then Connected once the mock call connects', async () => {
+    render(<ProfileViewCard contact={contact} totalContacts={1} campaignId="camp1" />)
+
+    fireEvent.click(screen.getByRole('button', { name: /Call John/ }))
+    expect(useDialerStore.getState().callStatus).toBe('ringing')
+    expect(screen.getByText('Ringing…')).toBeInTheDocument()
+
+    await vi.advanceTimersByTimeAsync(1500)
+    expect(useDialerStore.getState().callStatus).toBe('connected')
+    expect(screen.getByText(/Connected/)).toBeInTheDocument()
+  })
+
+  it('calls endCall when End Call is clicked while connected', async () => {
+    const endCall = vi.fn()
+    useDialerStore.setState({ callStatus: 'connected', endCall })
+    render(<ProfileViewCard contact={contact} totalContacts={1} campaignId="camp1" />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'End Call' }))
+    expect(endCall).toHaveBeenCalled()
+  })
+})
+
 describe('ProfileViewCard — phone number view', () => {
   beforeEach(() => {
     global.fetch = mockFetch()

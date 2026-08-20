@@ -94,7 +94,7 @@ model Tenant {
 
 model User {
   id        String        @id @default(cuid())
-  clerkId   String        @unique
+  clerkId   String
   tenantId  String
   email     String
   name      String
@@ -114,6 +114,11 @@ model User {
   contactNotes  ContactNote[]
   tasks          Task[]
   sdrPermissions SdrPermission[]
+
+  // Not globally unique: the demo build's single Clerk login gets a User row
+  // under each seeded tenant so its in-app tenant switcher can act as a real
+  // member of either one. Real customers still only ever have one row.
+  @@unique([tenantId, clerkId])
 }
 
 model Client {

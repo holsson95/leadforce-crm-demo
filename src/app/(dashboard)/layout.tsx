@@ -4,6 +4,7 @@ import { getClerkMeta } from '@/lib/auth'
 import { getDailyTargetStats } from '@/lib/reports'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { Toaster } from '@/components/ui/sonner'
+import { DemoModeBanner } from '@/components/shared/DemoModeBanner'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   let dailyStats = { count: 0, target: 0 }
@@ -41,11 +42,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[var(--bg-dark)]">
-      <Sidebar dailyStats={dailyStats} logoUrl={logoUrl} role={role} pendingPipelineCount={pendingPipelineCount} />
-      <main className="flex-1 overflow-y-auto custom-scrollbar">
-        {children}
-      </main>
+    <div className="flex flex-col h-screen overflow-hidden bg-[var(--bg-dark)]">
+      <DemoModeBanner />
+      <div className="flex flex-1 overflow-hidden">
+        <Sidebar dailyStats={dailyStats} logoUrl={logoUrl} role={role} pendingPipelineCount={pendingPipelineCount} />
+        <main className="flex-1 overflow-y-auto custom-scrollbar">
+          {children}
+        </main>
+      </div>
       <Toaster position="bottom-right" theme="dark" />
     </div>
   )

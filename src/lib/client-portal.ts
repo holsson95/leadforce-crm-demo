@@ -1,5 +1,5 @@
 import { db, withTenant } from '@/lib/db'
-import { getCurrentClerkUser } from '@/lib/auth'
+import { getCurrentClerkUser, getCurrentUserRole, getCurrentTenantId } from '@/lib/auth'
 import type { Prisma } from '@prisma/client'
 
 // Intentionally called outside withTenant — we look up by clerkId which is unique
@@ -7,6 +7,19 @@ import type { Prisma } from '@prisma/client'
 export async function getCurrentClientRecord() {
   const user = await getCurrentClerkUser()
   if (!user) return null
+
+  // Demo build only: the shared login has no real Client.clerkId (that field is
+  // globally unique, so it can't represent "the client" for both seeded tenants
+  // at once). When it's viewing as the client role, show the active demo
+  // tenant's own client instead of doing a clerkId lookup.
+  if (user.id === process.env.DEMO_USER_CLERK_ID) {
+    const role = await getCurrentUserRole()
+    if (role !== 'client') return null
+    const tenantId = await getCurrentTenantId()
+    if (!tenantId) return null
+    return db.client.findFirst({ where: { tenantId }, orderBy: { createdAt: 'asc' } })
+  }
+
   return db.client.findUnique({ where: { clerkId: user.id } })
 }
 

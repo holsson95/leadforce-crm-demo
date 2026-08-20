@@ -56,7 +56,7 @@ export function OutcomeSearchDropdown({ onSelect, onClose }: OutcomeSearchDropdo
   return (
     <div
       ref={containerRef}
-      className="absolute bottom-[calc(100%+8px)] left-1/2 -translate-x-1/2 z-50 w-64 rounded-xl border border-[var(--panel-border-hover)] bg-[var(--card-bg-solid)] shadow-2xl shadow-black/60 flex flex-col"
+      className="absolute bottom-[calc(100%+8px)] left-0 z-50 w-64 rounded-xl border border-[var(--panel-border-hover)] bg-[var(--card-bg-solid)] shadow-2xl shadow-black/60 flex flex-col"
     >
       <div className="p-2 border-b border-[var(--panel-border-hover)]">
         <input

@@ -37,7 +37,7 @@ export function Sidebar({ dailyStats, logoUrl, role = '', pendingPipelineCount =
   return (
     <aside
       className={cn(
-        'flex flex-col h-screen flex-shrink-0 transition-all duration-300 border-r border-[var(--panel-border)] bg-[var(--bg-dark)]',
+        'flex flex-col h-full flex-shrink-0 transition-all duration-300 border-r border-[var(--panel-border)] bg-[var(--bg-dark)]',
         sidebarCollapsed ? 'w-16' : 'w-64'
       )}
     >

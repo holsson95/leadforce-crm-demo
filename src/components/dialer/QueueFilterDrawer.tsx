@@ -11,11 +11,11 @@ import {
 } from '@/components/ui/select'
 
 const OP_OPTIONS: { value: NumericOp; label: string }[] = [
-  { value: 'eq',  label: '=' },
-  { value: 'gt',  label: '>' },
-  { value: 'lt',  label: '<' },
-  { value: 'gte', label: '≥' },
-  { value: 'lte', label: '≤' },
+  { value: 'eq',  label: 'Equal to' },
+  { value: 'gt',  label: 'More than' },
+  { value: 'lt',  label: 'Less than' },
+  { value: 'gte', label: 'At least' },
+  { value: 'lte', label: 'At most' },
 ]
 
 const INPUT_CLASS =
@@ -63,7 +63,7 @@ function NumericFilterControl({
   return (
     <div className="flex gap-2">
       <Select value={opValue} onValueChange={(v) => onOpChange(v as NumericOp)}>
-        <SelectTrigger className="w-16 bg-[var(--panel-border)] border-[var(--panel-border)] text-[var(--text-primary)] rounded-lg text-xs">
+        <SelectTrigger className="w-28 bg-[var(--panel-border)] border-[var(--panel-border)] text-[var(--text-primary)] rounded-lg text-xs">
           <SelectValue>{OP_OPTIONS.find((o) => o.value === opValue)?.label ?? opValue}</SelectValue>
         </SelectTrigger>
         <SelectContent className="rounded-lg border-[var(--panel-border)] bg-[var(--card-bg)]">
@@ -170,7 +170,7 @@ export function QueueFilterDrawer({
       <div className="absolute inset-0 z-40" onClick={handleClose} />
 
       {/* Drawer panel */}
-      <div className="absolute top-0 right-0 h-full w-80 z-50 bg-[var(--card-bg)] border-l border-[var(--panel-border)] flex flex-col shadow-2xl">
+      <div className="absolute top-0 right-0 h-full w-80 z-50 bg-[var(--card-bg-solid)] border-l border-[var(--panel-border)] flex flex-col shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--panel-border)] flex-shrink-0">
           <p className="text-sm font-semibold text-[var(--text-primary)]">Filter queue</p>
@@ -363,7 +363,7 @@ export function QueueFilterDrawer({
                     {selectedUser ? selectedUser.name : 'Any owner'}
                   </SelectValue>
                 </SelectTrigger>
-                <SelectContent className="rounded-xl border-[var(--panel-border)] bg-[var(--card-bg)]">
+                <SelectContent className="rounded-xl border-[var(--panel-border)] bg-[var(--card-bg-solid)]">
                   <SelectItem
                     value=""
                     className="text-[var(--text-secondary)] focus:bg-[var(--panel-border-hover)] focus:text-[var(--text-primary)] rounded-lg text-xs"

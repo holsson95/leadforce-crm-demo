@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Phone, GripVertical, ChevronDown, ChevronLeft, ChevronRight, Copy, Check, Globe, Filter, List, SquareUser } from 'lucide-react'
+import { Phone, PhoneOff, GripVertical, ChevronDown, ChevronLeft, ChevronRight, Copy, Check, Globe, Filter, List, SquareUser } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -183,6 +183,31 @@ function CompanyCell({ contact }: { contact: ContactSummary }) {
   )
 }
 
+function formatDuration(totalSeconds: number): string {
+  const m = Math.floor(totalSeconds / 60)
+  const s = totalSeconds % 60
+  return `${m}:${String(s).padStart(2, '0')}`
+}
+
+function CallStatusBadge({ status, elapsed }: { status: 'ringing' | 'connected'; elapsed: number }) {
+  return (
+    <span className="flex items-center gap-1 mt-0.5">
+      <span
+        className={cn(
+          'w-1.5 h-1.5 rounded-full flex-shrink-0',
+          status === 'connected' ? 'bg-emerald-400' : 'bg-[var(--lf-accent)] animate-pulse',
+        )}
+      />
+      <span
+        className="text-[11px] font-medium"
+        style={{ color: status === 'connected' ? '#7dd6ab' : 'var(--lf-accent)' }}
+      >
+        {status === 'connected' ? `Connected · ${formatDuration(elapsed)}` : 'Ringing…'}
+      </span>
+    </span>
+  )
+}
+
 function ContactRow({
   contact,
   isActive,
@@ -206,8 +231,20 @@ function ContactRow({
   allContactsIndex: number
   onOpenProfile: (index: number) => void
 }) {
-  const { callStatus, selectContact, startCall, phoneNumberView } = useDialerStore()
+  const { callStatus, selectContact, startCall, endCall, phoneNumberView } = useDialerStore()
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: contact.id })
+
+  const callActiveHere = isActive && (callStatus === 'ringing' || callStatus === 'connected')
+
+  const [callElapsed, setCallElapsed] = useState(0)
+  useEffect(() => {
+    if (!isActive || callStatus !== 'connected') {
+      if (!isActive || callStatus === 'ringing') setCallElapsed(0)
+      return
+    }
+    const id = setInterval(() => setCallElapsed((s) => s + 1), 1000)
+    return () => clearInterval(id)
+  }, [isActive, callStatus])
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -225,6 +262,10 @@ function ContactRow({
 
   const handleCallClick = async (e: React.MouseEvent) => {
     e.stopPropagation()
+    if (callActiveHere) {
+      await endCall(callElapsed)
+      return
+    }
     if (callStatus !== 'idle') return
     if (!isActive) {
       selectContact(contact)
@@ -304,7 +345,9 @@ function ContactRow({
                 </a>
               )}
             </div>
-            {subtext && (
+            {callActiveHere ? (
+              <CallStatusBadge status={callStatus as 'ringing' | 'connected'} elapsed={callElapsed} />
+            ) : subtext && (
               <p className="text-[13px] truncate leading-tight mt-0.5" style={{ color: 'var(--text-muted)' }}>
                 {subtext}
               </p>
@@ -329,23 +372,27 @@ function ContactRow({
 
         <button
           onClick={handleCallClick}
-          disabled={callStatus !== 'idle' || (isActive && !resolvedPhone)}
+          disabled={!callActiveHere && (callStatus !== 'idle' || (isActive && !resolvedPhone))}
           className={cn(
             'w-6 h-6 flex items-center justify-center rounded-lg flex-shrink-0 transition-colors',
-            isActive
-              ? 'bg-[var(--lf-accent)]/10 text-[var(--lf-accent)] hover:bg-[var(--lf-accent)]/20'
-              : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--panel-border-hover)]',
-            (callStatus !== 'idle' || (isActive && !resolvedPhone)) && 'opacity-30 cursor-not-allowed',
+            callActiveHere
+              ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20'
+              : isActive
+                ? 'bg-[var(--lf-accent)]/10 text-[var(--lf-accent)] hover:bg-[var(--lf-accent)]/20'
+                : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--panel-border-hover)]',
+            !callActiveHere && (callStatus !== 'idle' || (isActive && !resolvedPhone)) && 'opacity-30 cursor-not-allowed',
           )}
           title={
-            !isActive
-              ? 'Select contact'
-              : resolvedPhone
-                ? 'Start call'
-                : `No ${phoneNumberView} number on file`
+            callActiveHere
+              ? 'End call'
+              : !isActive
+                ? 'Select contact'
+                : resolvedPhone
+                  ? 'Start call'
+                  : `No ${phoneNumberView} number on file`
           }
         >
-          <Phone className="w-3 h-3" />
+          {callActiveHere ? <PhoneOff className="w-3 h-3" /> : <Phone className="w-3 h-3" />}
         </button>
         <button
           onClick={(e) => { e.stopPropagation(); onOpenProfile(allContactsIndex) }}
@@ -438,6 +485,7 @@ export function QueuePanel({ campaigns, users, defaultCampaignId }: QueuePanelPr
   const [loadingContactId, setLoadingContactId] = useState<string | null>(null)
   const [contactCache, setContactCache] = useState<Record<string, ContactWithCampaign>>({})
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false)
+  const [campaignSwitching, setCampaignSwitching] = useState(false)
   const autoSelectedRef = useRef(false)
 
   const handleToggle = async (id: string) => {
@@ -516,11 +564,14 @@ export function QueuePanel({ campaigns, users, defaultCampaignId }: QueuePanelPr
     setLoadingContactId(null)
     setContactCache({})
     setCampaign(id, [], 0)
+    setCampaignSwitching(true)
     try {
       await loadQueue()
       await startSession(id)
     } catch {
       // Swallow unexpected errors to prevent React error boundary from triggering
+    } finally {
+      setCampaignSwitching(false)
     }
   }
 
@@ -581,7 +632,7 @@ export function QueuePanel({ campaigns, users, defaultCampaignId }: QueuePanelPr
                   {(v: string | null) => v ? (campaigns.find(c => c.id === v)?.name ?? v) : 'Select a campaign…'}
                 </SelectValue>
               </SelectTrigger>
-              <SelectContent className="rounded-xl border-[var(--panel-border)] bg-[var(--card-bg)]">
+              <SelectContent alignItemWithTrigger={false} className="rounded-xl border-[var(--panel-border)] bg-[var(--card-bg)]">
                 {campaigns.map((c) => (
                   <SelectItem key={c.id} value={c.id}
                     className="text-[var(--text-secondary)] focus:bg-[var(--panel-border-hover)] focus:text-[var(--text-primary)] rounded-lg">
@@ -701,6 +752,10 @@ export function QueuePanel({ campaigns, users, defaultCampaignId }: QueuePanelPr
           ) : !campaignId ? (
             <div className="flex items-center justify-center h-full">
               <p className="text-sm text-[var(--text-muted)]">Select a campaign to begin</p>
+            </div>
+          ) : campaignSwitching ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="w-6 h-6 border-2 border-[var(--lf-accent)]/30 border-t-[var(--lf-accent)] rounded-full animate-spin" />
             </div>
           ) : allContacts.length === 0 ? (
             <div className="flex items-center justify-center h-full">

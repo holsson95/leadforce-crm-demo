@@ -1,5 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
+import { DEMO_ROLE_COOKIE, DEMO_ROLES } from '@/lib/demo'
 
 const isPublicRoute = createRouteMatcher([
   '/sign-in(.*)',
@@ -27,8 +28,19 @@ export default clerkMiddleware(async (auth, request) => {
 
   await auth.protect()
 
-  const { sessionClaims } = await auth()
-  const role = (sessionClaims?.metadata as { role?: string } | undefined)?.role
+  const { userId, sessionClaims } = await auth()
+
+  // The shared demo login can flip its effective role via a cookie (see
+  // src/lib/auth.ts's resolveDemoOverrideRole) so it can preview the
+  // client-portal view without a separate Clerk account. Route gating needs
+  // to see that same override, since sessionClaims never changes.
+  const isDemoUser = Boolean(userId) && userId === process.env.DEMO_USER_CLERK_ID
+  const demoRoleOverride = isDemoUser ? request.cookies.get(DEMO_ROLE_COOKIE)?.value : undefined
+  const roleOverride = demoRoleOverride && (DEMO_ROLES as readonly string[]).includes(demoRoleOverride)
+    ? demoRoleOverride
+    : undefined
+
+  const role = roleOverride ?? (sessionClaims?.metadata as { role?: string } | undefined)?.role
 
   if (role === 'client' && isDashboardRoute(request)) {
     return NextResponse.redirect(new URL('/client-portal', request.url))
