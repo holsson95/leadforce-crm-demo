@@ -11,7 +11,7 @@ This repository is a **public portfolio demo** built from a real client project.
 - **One-click access.** Click "View Demo" on the sign-in screen — no signup, no email required.
 - **Two fictional tenants** ("Acme Outreach" and "Nova Sales") with their own reps, clients, campaigns, contacts, and pipeline, seeded by `scripts/seed-demo.ts`. A switcher in the header lets you flip between them live to see multi-tenant data isolation in action.
 - **Simulated telephony.** `src/lib/telephony/mock.ts` drives the dialer's call states locally — there's no real telephony API this build can reach.
-- **Data resets hourly** via a Vercel Cron job (`/api/cron/reset-demo`) that re-runs the seed script, so feel free to edit, delete, or create anything.
+- **Data resets daily** via a Vercel Cron job (`/api/cron/reset-demo`) that re-runs the seed script, so feel free to edit, delete, or create anything.
 
 ---
 

@@ -3,8 +3,9 @@ import type { PrismaClient } from '@prisma/client'
 import { db } from '@/lib/db'
 import { resetAndSeedDemoTenants } from '@/lib/jobs/seed-demo-data'
 
-// Hourly Vercel Cron (see vercel.json): re-seeds both demo tenants, undoing
-// whatever a visitor edited or deleted.
+// Daily Vercel Cron (see vercel.json): re-seeds both demo tenants, undoing
+// whatever a visitor edited or deleted. Runs once a day since Vercel's free
+// Hobby plan only allows daily (not hourly) cron schedules.
 //
 // Vercel's native Cron Jobs always send a GET request, and automatically add
 // `Authorization: Bearer $CRON_SECRET` when a CRON_SECRET env var is set —
